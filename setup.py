@@ -18,6 +18,7 @@ setup(name='exgrex-pytest',
       packages=find_packages(
           exclude=['test', '*.test.*', '*.test', 'bats', '*.bats.*', '*.bats', ]
       ),
+      entry_points={"pytest11": ["exgrex = exgrexPytest.plugin"]},
       package_data={'docs': [], 'example': []},
       install_requires=['exgrex-py', ],
       scripts=[],
