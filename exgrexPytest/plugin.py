@@ -1,14 +1,16 @@
+import logging
 import time
 from pathlib import Path
-import logging
-from exgrex.graders import createFileLogger
+
 import pytest
+from exgrex.graders import createFileLogger
 
 SEPARATOR = '=' * 70
 
+# https://stackoverflow.com/questions/53249304/how-to-list-all-existing-loggers-using-python-logging-module
 loggers = logging.root.manager.loggerDict.keys()
 
-# для случая, когда тесты запускаются из командной строки без использования exgrex
+# for the case when tests are run from the command line without using exgrex
 if not 'scoreLogger' in loggers and not 'feedbackLogger' in loggers:
     scoreLogFile = Path(Path.cwd(), 'score.log')
     feedbackLogFile = Path(Path.cwd(), 'feedback.log')
@@ -25,7 +27,6 @@ if not 'scoreLogger' in loggers and not 'feedbackLogger' in loggers:
     feedbackLogger = createFileLogger(
         'feedbackLogger', feedbackLogFile, '%(message)s'
     )
-# https://stackoverflow.com/questions/53249304/how-to-list-all-existing-loggers-using-python-logging-module
 
 # messages templates
 TITLE = 'Total tests: {}. Tests failed: {}. Total testing time: {}.'
@@ -34,7 +35,7 @@ FAILED_TESTS_MESSAGE = '[Failed] {}.\n{}'
 ERROR_GRADER_MESSAGE = \
     'The grader crashed. Check for syntax errors in your solution and the ability\n' \
     'to import it as a module. If the error reappears, please contact the support\n' \
-    'administrator. The error log:\n\n{}'
+    'administrator. \n\n{}'
 
 
 def pytest_addoption(parser):
@@ -45,7 +46,7 @@ def pytest_addoption(parser):
     group._addoption(
         '--grader-mode', dest='grader_mode', metavar='grader-mode',
         action="store",
-        choices=['default', 'minimal', 'full'],
+        choices=['default', 'user'],
         type="choice",
         help='sets one and preset reporting modes for external mook courses grader')
 
@@ -69,7 +70,7 @@ def pytest_sessionstart(session):
 
 @pytest.hookimpl()
 def pytest_configure(config):
-    if config.getoption('grader_mode') == 'default':
+    if config.getoption('grader_mode'):
         setattr(config, 'grader_errors', [])
         setattr(config, 'grader_failed', [])
         setattr(config, 'grader_start_time', time.time())
@@ -107,7 +108,7 @@ def pytest_runtest_makereport(item, call):
 def pytest_sessionfinish(session, exitstatus):
     if session.config.getoption('grader_mode'):
 
-        if Path(scoreLogger.handlers[0].baseFilename).read_text() == '0\n':
+        if Path(scoreLogger.handlers[0].baseFilename).read_text().strip() == '0':
             feedbackLogger.error(SEPARATOR)
             feedbackLogger.error('Try again.')
         else:
@@ -117,30 +118,23 @@ def pytest_sessionfinish(session, exitstatus):
                 round(time.time() - session.config.grader_start_time, 4)
             )
 
-            if session.config.grader_errors:
-                feedback = session.config.grader_errors[0]
-            elif session.config.grader_failed:
-                feedback = session.config.grader_failed[0]
-            else:
-                feedback = POSITIVE_MESSAGE
+            feedbackLogger.error(statistics)
 
-            # TODO: написать корректное
+            if session.config.grader_errors:
+                feedback = (session.config.grader_errors[0],)
+            elif session.config.grader_failed:
+                feedback = session.config.grader_failed
+            else:
+                feedback = (POSITIVE_MESSAGE,)
+            for testReport in feedback:
+                feedbackLogger.error(SEPARATOR)
+                feedbackLogger.error(testReport)
+
+            # TODO: add logic for part score (0.0 - 1.0)
             # created vshagur@gmail.com, 2021-01-16
             score = abs(int(exitstatus) - 1)
             scoreLogger.error(score)
-            feedbackLogger.error(statistics)
-            feedbackLogger.error(SEPARATOR)
-            feedbackLogger.error(feedback)
 
             if session.config.grader_errors or session.config.grader_failed:
                 feedbackLogger.error(SEPARATOR)
                 feedbackLogger.error('Try again.')
-
-# TODO:
-# created vshagur@gmail.com, 2020-09-20
-# добавить новый функционал - вывод для нескольких тестов (количество задается
-# в параметрах командной строки)
-# TODO:
-# created vshagur@gmail.com, 2020-09-20
-# добавить новый функционал - вычисление score (для случаев, когда допускается
-# частичное решение задания), процент прохождения задается в параметрах командной строки
