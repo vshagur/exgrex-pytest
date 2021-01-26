@@ -52,8 +52,8 @@ def pytest_addoption(parser):
     group._addoption(
         '--passrate', dest='passrate', metavar='passrate',
         action="store",
-        type=float,
-        default=1.0,
+        type=Decimal,
+        default=Decimal('1.0'),
         help='sets passrate')
 
     group._addoption(
@@ -133,7 +133,7 @@ def pytest_sessionfinish(session, exitstatus):
             feedbackLogger.error(SEPARATOR)
             feedbackLogger.error('Try again.')
         else:
-            passrate = Decimal(str(session.config.getoption('passrate')))
+            passrate = session.config.getoption('passrate')
             maxfail = session.config.getoption('maxfail')
             limit = session.config.getoption('limit')
 
