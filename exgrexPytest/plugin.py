@@ -1,5 +1,6 @@
 import logging
 import time
+from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
 
 import pytest
@@ -28,15 +29,6 @@ if not 'scoreLogger' in loggers and not 'feedbackLogger' in loggers:
         'feedbackLogger', feedbackLogFile, '%(message)s'
     )
 
-# messages templates
-TITLE = 'Total tests: {}. Tests failed: {}. Total testing time: {}.'
-POSITIVE_MESSAGE = "All tests passed."
-FAILED_TESTS_MESSAGE = '[Failed] {}.\n{}'
-ERROR_GRADER_MESSAGE = \
-    'The grader crashed. Check for syntax errors in your solution and the ability\n' \
-    'to import it as a module. If the error reappears, please contact the support\n' \
-    'administrator. \n\n{}'
-
 
 def pytest_addoption(parser):
     group = parser.getgroup(
@@ -46,7 +38,7 @@ def pytest_addoption(parser):
     group._addoption(
         '--grader-mode', dest='grader_mode', metavar='grader-mode',
         action="store",
-        choices=['default', 'user'],
+        choices=['no', 'line', 'short', 'long'],
         type="choice",
         help='sets one and preset reporting modes for external mook courses grader')
 
@@ -54,15 +46,27 @@ def pytest_addoption(parser):
         '--taskname', dest='taskname', metavar='taskname',
         action="store",
         type=str,
+        default='An unnamed task.',
         help='sets taskname')
+
+    group._addoption(
+        '--passrate', dest='passrate', metavar='passrate',
+        action="store",
+        type=float,
+        default=1.0,
+        help='sets passrate')
+
+    group._addoption(
+        '--limit', dest='limit', metavar='limit',
+        action="store",
+        type=int,
+        help='sets limit')
 
 
 @pytest.hookimpl()
 def pytest_sessionstart(session):
     if session.config.getoption('grader_mode'):
-        # TODO:
-        # created vshagur@gmail.com, 2021-01-16
-        taskname = session.config.getoption('taskname')
+        taskname = session.config.getoption('taskname').strip('\'"')
         feedbackLogger.error(SEPARATOR)
         feedbackLogger.error(f'Test result of the task: "{taskname}"')
         feedbackLogger.error(SEPARATOR)
@@ -83,7 +87,12 @@ def pytest_collectreport(report):
 
         if 'scoreLogger' in loggers and 'feedbackLogger' in loggers:
             scoreLogger.error(0)
-            feedbackLogger.error(ERROR_GRADER_MESSAGE.format(report.longrepr.longrepr))
+
+            feedbackLogger.error(
+                f'The grader crashed. Check for syntax errors in your solution and '
+                f'the ability\n to import it as a module. If the error reappears, please '
+                f'contact the support\nadministrator.\n\n{report.longrepr.longrepr}'
+            )
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -94,13 +103,25 @@ def pytest_runtest_makereport(item, call):
     if item.config.getoption('grader_mode'):
         if result.when in ('setup', 'teardown') and result.outcome == 'failed':
             item.config.grader_errors.append(
-                ERROR_GRADER_MESSAGE.format(result.longrepr)
+                f'The grader crashed. Check for syntax errors in your solution and '
+                f'the ability\n to import it as a module. If the error reappears, please '
+                f'contact the support\nadministrator.\n\n{result.longrepr}'
             )
 
         elif result.when == 'call' and result.outcome == 'failed':
             _, _, testname = result.location
-            message = FAILED_TESTS_MESSAGE.format(
-                testname, result.longrepr.reprcrash.message)
+
+            message = '[Failed] {}.\n{}'
+
+            if item.config.getoption('grader_mode') == 'line':
+                message = message.format(testname, '')
+            elif item.config.getoption('grader_mode') == 'short':
+                message = message.format(testname, result.longrepr.reprcrash.message)
+            elif item.config.getoption('grader_mode') == 'long':
+                message = message.format(testname, result.longrepr.reprtraceback)
+            else:
+                message = message.format(testname, result.longrepr.reprtraceback)
+
             item.config.grader_failed.append(message)
 
 
@@ -112,29 +133,70 @@ def pytest_sessionfinish(session, exitstatus):
             feedbackLogger.error(SEPARATOR)
             feedbackLogger.error('Try again.')
         else:
-            statistics = TITLE.format(
-                session.testscollected,
-                session.testsfailed,
-                round(time.time() - session.config.grader_start_time, 4)
-            )
+            passrate = session.config.getoption('passrate')
+            maxfail = session.config.getoption('maxfail')
+            limit = session.config.getoption('limit')
+
+            statistics = f'Total tests: {session.testscollected}. '
+
+            if maxfail != 1:
+                statistics += f'Tests failed: {session.testsfailed}. '
+
+            duration = round(time.time() - session.config.grader_start_time, 4)
+
+            statistics += f'Total testing time: {duration}.'
 
             feedbackLogger.error(statistics)
 
             if session.config.grader_errors:
                 feedback = (session.config.grader_errors[0],)
             elif session.config.grader_failed:
-                feedback = session.config.grader_failed
+                if session.config.getoption('grader_mode') == 'no':
+                    feedback = ('Incorrect answer.',)
+                else:
+                    feedback = session.config.grader_failed
             else:
-                feedback = (POSITIVE_MESSAGE,)
+                feedback = tuple()
+
+            if limit != 0:
+                feedback = feedback[:limit]
+
             for testReport in feedback:
                 feedbackLogger.error(SEPARATOR)
                 feedbackLogger.error(testReport)
 
-            # TODO: add logic for part score (0.0 - 1.0)
-            # created vshagur@gmail.com, 2021-01-16
-            score = abs(int(exitstatus) - 1)
-            scoreLogger.error(score)
+            if passrate == 1 or maxfail == 1 or session.config.grader_errors:
+                score = abs(int(exitstatus) - 1)
+            else:
+                success = (session.testscollected -
+                           session.testsfailed) / session.testscollected
+                score = Decimal(success).quantize(Decimal('.01'), rounding=ROUND_DOWN)
 
-            if session.config.grader_errors or session.config.grader_failed:
+            if score == 1:
+                feedbackLogger.error('All tests passed.')
+            elif score < passrate:
                 feedbackLogger.error(SEPARATOR)
-                feedbackLogger.error('Try again.')
+                if maxfail == 1:
+                    feedbackLogger.error('Not passed. Try again.')
+                else:
+                    feedbackLogger.error(
+                        f'Not passed. Score: {int(score * 100)} points out of 100.\n'
+                        f'To pass the test, you need to score {int(passrate * 100)} '
+                        f'points.\nTry again.'
+                    )
+            elif passrate <= score < 1:
+                feedbackLogger.error(SEPARATOR)
+                feedbackLogger.error(
+                    f'Passed. Score: {int(score * 100)} points out of 100. \n'
+                    f'You have scored the required number of points to pass the test.\n'
+                    f'If you want, you can try to take the test again and get a '
+                    f'higher grade.'
+                )
+                score = 1
+            else:
+                feedbackLogger.error(
+                    'Grader error. Invalid test score received. Please report to '
+                    'course staff.'
+                )
+
+            scoreLogger.error(score)

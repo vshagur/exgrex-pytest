@@ -4,12 +4,11 @@ from functools import wraps
 
 class RunPytestTests:
 
-    def __init__(self, mode='default', args=None):
+    def __init__(self, mode='short', failfast=True, passrate=1, limit=0):
+        self.failfast = failfast
         self.mode = mode
-        if args is None:
-            self.args = []
-        else:
-            self.args = args
+        self.passrate=passrate
+        self.limit=limit
 
     def __call__(self, func):
         @wraps(func)
@@ -17,20 +16,14 @@ class RunPytestTests:
             args = [
                 f'pytest',
                 f'--grader-mode={self.mode}',
-                f'--taskname="{grader.taskName}"', ]
+                f'--taskname="{grader.taskName}"',
+                f'--passrate={self.passrate}',
+                f'--limit={self.limit}',
 
-            if self.mode == 'user':
-                args.extend(self.args)
-            elif self.mode == 'default':
-                args.extend(['--tb=short', '-x'])
-            elif self.mode == 'other_mode':
-                # TODO: add modes
-                # created vshagur@gmail.com, 2021-01-19
-                pass
-            else:
-                # TODO: add code
-                # created vshagur@gmail.com, 2021-01-19
-                pass
+            ]
+
+            if self.failfast:
+                args.append('-x')
 
             args.append(f'{grader.testsDir}')
 
