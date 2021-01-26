@@ -7,8 +7,8 @@ class RunPytestTests:
     def __init__(self, mode='short', failfast=True, passrate=1, limit=0):
         self.failfast = failfast
         self.mode = mode
-        self.passrate=passrate
-        self.limit=limit
+        self.passrate = passrate
+        self.limit = limit
 
     def __call__(self, func):
         @wraps(func)

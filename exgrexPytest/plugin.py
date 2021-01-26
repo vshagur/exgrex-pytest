@@ -1,6 +1,6 @@
 import logging
 import time
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 from pathlib import Path
 
 import pytest
@@ -133,7 +133,7 @@ def pytest_sessionfinish(session, exitstatus):
             feedbackLogger.error(SEPARATOR)
             feedbackLogger.error('Try again.')
         else:
-            passrate = session.config.getoption('passrate')
+            passrate = Decimal(str(session.config.getoption('passrate')))
             maxfail = session.config.getoption('maxfail')
             limit = session.config.getoption('limit')
 
