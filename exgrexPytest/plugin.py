@@ -104,7 +104,7 @@ def pytest_runtest_makereport(item, call):
         if result.when in ('setup', 'teardown') and result.outcome == 'failed':
             item.config.grader_errors.append(
                 f'The grader crashed. Check for syntax errors in your solution and '
-                f'the ability\n to import it as a module. If the error reappears, please '
+                f'the ability\nto import it as a module. If the error reappears, please '
                 f'contact the support\nadministrator.\n\n{result.longrepr}'
             )
 
