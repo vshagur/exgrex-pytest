@@ -33,6 +33,7 @@ teardown() {
   [ "$status" = 0 ]
   # check error message
   run bash -c "grep -E \".*Incorrect answer.*\" $REPORT"
+  [ "$status" = 0 ]
   # check error message not in output
   run bash -c "grep -E \".*\[Failed\] test_2.*\" $REPORT"
   [ "$status" = 1 ]
@@ -68,6 +69,7 @@ teardown() {
   [ "$status" = 0 ]
   # check error message
   run bash -c "grep -E \".*Incorrect answer.*\" $REPORT"
+  [ "$status" = 0 ]
   # check error message not in output
   run bash -c "grep -E \".*\[Failed\] test_2.*\" $REPORT"
   [ "$status" = 1 ]
