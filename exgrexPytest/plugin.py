@@ -131,7 +131,7 @@ def pytest_sessionfinish(session, exitstatus):
 
         if Path(scoreLogger.handlers[0].baseFilename).read_text().strip() == '0':
             feedbackLogger.error(SEPARATOR)
-            feedbackLogger.error('Try again.')
+            feedbackLogger.error('Not passed. Try again.')
         else:
             passrate = session.config.getoption('passrate')
             maxfail = session.config.getoption('maxfail')
