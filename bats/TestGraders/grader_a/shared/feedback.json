@@ -1,0 +1,4 @@
+{
+  "fractionalScore": 0,
+  "feedback": "======================================================================\nTest result of the task: \"Example task.\"\n======================================================================\nTotal tests: 19. Total testing time: 0.0655.\n======================================================================\n[Failed] test_2.\nnew_summa = None\n\n    def test_2(new_summa):\n        \"\"\"failed\"\"\"\n>       assert summa(1, 0) == 5, 'Test 2. assert message test_2'\nE       AssertionError: Test 2. assert message test_2\nE       assert 1 == 5\nE        +  where 1 = summa(1, 0)\n\n../ABCD/tests/test_example.py:23: AssertionError\n======================================================================\nNot passed. Try again."
+}

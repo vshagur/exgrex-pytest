@@ -114,7 +114,7 @@ def pytest_runtest_makereport(item, call):
             message = '[Failed] {}.\n{}'
 
             if item.config.getoption('grader_mode') == 'line':
-                message = message.format(testname, '')
+                message = '[Failed] {}.'.format(testname, '')
             elif item.config.getoption('grader_mode') == 'short':
                 message = message.format(testname, result.longrepr.reprcrash.message)
             elif item.config.getoption('grader_mode') == 'long':
@@ -136,6 +136,7 @@ def pytest_sessionfinish(session, exitstatus):
             passrate = session.config.getoption('passrate')
             maxfail = session.config.getoption('maxfail')
             limit = session.config.getoption('limit')
+            mode = session.config.getoption('grader_mode')
 
             statistics = f'Total tests: {session.testscollected}. '
 
@@ -174,9 +175,14 @@ def pytest_sessionfinish(session, exitstatus):
 
             if score == 1:
                 feedbackLogger.error('All tests passed.')
+
+            elif passrate == 1 and score < passrate:
+                feedbackLogger.error(SEPARATOR)
+                feedbackLogger.error('Not passed. Try again.')
+
             elif score < passrate:
                 feedbackLogger.error(SEPARATOR)
-                if maxfail == 1:
+                if maxfail == 1 or mode == 'no':
                     feedbackLogger.error('Not passed. Try again.')
                 else:
                     feedbackLogger.error(
