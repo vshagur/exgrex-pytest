@@ -6,8 +6,18 @@ Package exgrex-pytest adds to package exgrex-py the ability to use the pytest fr
 ![](https://img.shields.io/github/license/vshagur/exgrex)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/vshagur/exgrex-pytest)
 
-## Documentation
+## Installation
+```
+$ python3 -m pip install exgrex-pytest
+```
 
+## Requirements
+- [pytest](https://docs.pytest.org/en/stable/) - The pytest framework makes it easy to write small tests, yet scales to support complex functional testing for applications and libraries.
+
+- [exgrex-py](https://github.com/vshagur/exgrex-py) - The exgrex-py package provides a unified tool that makes it easy to create and maintain graders (automatic student decision checking systems) in Python programming courses. 
+
+## Documentation
+[The link to the documentation will appear soon ]()
 
 ## Authors
 
