@@ -91,7 +91,7 @@ def pytest_collectreport(report):
             feedbackLogger.error(
                 f'The grader crashed. Check for syntax errors in your solution and '
                 f'the ability\nto import it as a module. If the error reappears, please '
-                f'contact the support\nadministrator.\n\n{report.longrepr.longrepr}'
+                f'contact the support\nadministrator.\n\n{report.longrepr}'
             )
 
 
