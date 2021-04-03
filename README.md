@@ -19,6 +19,10 @@ $ python3 -m pip install exgrex-pytest
 ## Documentation
 [The link to the documentation will appear soon ]()
 
+
+## Changelog
+2021-04-03 fix security: urllib3 -> 1.26.4, cryptography -> 3.3.2, bleach -> 3.3.0
+
 ## Authors
 
 * **Valeriy Shagur**  - [vshagur](https://github.com/vshagur), email: vshagur@gmail.com

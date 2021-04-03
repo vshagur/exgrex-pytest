@@ -185,7 +185,7 @@ teardown() {
   run bash -c "grep -E \".*def test_2(new_summa)*\" $REPORT"
   [ "$status" = 0 ]
   # check number line message
-  run bash -c "grep -E \".*/ABCD/tests/test_example.py:23: AssertionError*\" $REPORT"
+  run bash -c "grep -E \".*test_example.py:23: AssertionError*\" $REPORT"
   [ "$status" = 0 ]
 }
 
