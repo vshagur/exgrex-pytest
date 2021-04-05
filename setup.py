@@ -8,7 +8,7 @@ with open("README", "r") as fh:
     long_description = fh.read()
 
 setup(name='exgrex-pytest',
-      version='0.1a1',
+      version='0.1a2',
       description='Package exgrex-pytest adds to package exgrex-py the ability to use '
                   'the pytest framework.',
       long_description=long_description,
