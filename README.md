@@ -21,7 +21,7 @@ $ python3 -m pip install exgrex-pytest
 
 ## Changelog
 
-[CHANGELOG.md]()
+[CHANGELOG.md](https://github.com/vshagur/exgrex-pytest/blob/main/CHANGELOG.md)
 
 ## Authors
 
